@@ -7,7 +7,7 @@ use envoy_types::ext_authz::v3::{pb::{
 use rust_cfzt_validator::Validator;
 use jsonwebtoken::{Validation, Algorithm};
 
-use super::{request::{get_address, get_headers, PrincipalAssertion}, response::ResponseMutator};
+use super::{request::{get_headers, PrincipalAssertion}, response::ResponseMutator};
 
 pub struct CloudflareZeroTrustAuthorizationServer {
     validator: Arc<Box<dyn Validator>>,
@@ -42,14 +42,10 @@ impl Authorization for CloudflareZeroTrustAuthorizationServer {
     async fn check(&self, request: Request<CheckRequest>) -> super::ExtAuthzResult {
         let check_request = request.into_inner();
         let client_headers = get_headers(&check_request)?;
-        let client_address = get_address(&check_request)?;
-
-        log::info!("Recieved request from {}", client_address);
 
         let header = "cf-access-jwt-assertion".to_string();
         match client_headers.get(&header) {
             Some(value) => {
-                log::debug!("Request has JWT: {}", value);
                 match self.validate(value) {
                     Ok(assertion) => {
                         log::info!("Request passed validation");
@@ -68,7 +64,7 @@ impl Authorization for CloudflareZeroTrustAuthorizationServer {
 
             },
             None => {
-                log::warn!("Request from {} missing JWT header", client_address);
+                log::warn!("Request missing JWT header");
                 Err(Status::invalid_argument("Missing CF JWT header"))
             },
         }
