@@ -14,7 +14,7 @@ COPY src/ ./src
 
 RUN echo "app:*:1000:1000:app:/:/bin/false" >> ./out/passwd && echo "app:*:1000:" >> ./out/group
 RUN cargo build -r --target=$(arch)-unknown-linux-musl && cp ./target/$(arch)-unknown-linux-musl/release/extauthz-cfzt ./out
-RUN cargo sbom >> /usr/local/share/sbom/extauthz-cfzt.spdx.json
+RUN mkdir -p /usr/local/share/sbom && cargo sbom >> /usr/local/share/sbom/extauthz-cfzt.spdx.json
 
 FROM scratch AS app
 
