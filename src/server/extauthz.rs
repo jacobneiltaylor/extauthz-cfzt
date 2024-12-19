@@ -7,7 +7,7 @@ use envoy_types::ext_authz::v3::{pb::{
 use rust_cfzt_validator::Validator;
 use jsonwebtoken::{Validation, Algorithm};
 
-use super::{request::{get_headers, PrincipalAssertion}, response::ResponseMutator};
+use super::{request::{get_address, get_headers, PrincipalAssertion}, response::ResponseMutator};
 
 pub struct CloudflareZeroTrustAuthorizationServer {
     validator: Arc<Box<dyn Validator>>,
@@ -42,18 +42,34 @@ impl Authorization for CloudflareZeroTrustAuthorizationServer {
     async fn check(&self, request: Request<CheckRequest>) -> super::ExtAuthzResult {
         let check_request = request.into_inner();
         let client_headers = get_headers(&check_request)?;
+        let client_address = get_address(&check_request)?;
+
+        log::info!("Recieved request from {}", client_address);
 
         match client_headers.get("Cf-Access-Jwt-Assertion") {
             Some(value) => {
-                let assertion = self.validate(value)?;
-                let mut builder = OkHttpResponseBuilder::new();
-                assertion.mutate_response(&mut builder);
+                log::debug!("Request has JWT: {}", value);
+                match self.validate(value) {
+                    Ok(assertion) => {
+                        log::info!("Request passed validation");
+                        let mut builder = OkHttpResponseBuilder::new();
+                        assertion.mutate_response(&mut builder);
+        
+                        let mut response = CheckResponse::with_status(Status::ok("token validated"));
+                        response.set_http_response(builder);
+                        Ok(Response::new(response))
+                    }
+                    Err(e) => {
+                        log::info!("Request failed validation: {}", e.to_string());
+                        Err(e)
+                    }
+                }
 
-                let mut response = CheckResponse::with_status(Status::ok("token validated"));
-                response.set_http_response(builder);
-                Ok(Response::new(response))
             },
-            None => Err(Status::invalid_argument("Missing CF JWT header")),
+            None => {
+                log::warn!("Request from {} missing JWT header", client_address);
+                Err(Status::invalid_argument("Missing CF JWT header"))
+            },
         }
     }
 }

@@ -21,7 +21,7 @@ services:
       - TEAM_NAME=molten
       - AUDIENCE=41f1d879c797d912d9bd80710db3dce92d30602a2dcbdf7bab33913071c44bd4
       - LISTENER=tcp://127.0.0.1:10000
-      - RUST_LOG=info
+      - RUST_LOG=debug
     ports:
       - "10000"
 

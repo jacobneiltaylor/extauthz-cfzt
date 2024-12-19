@@ -9,6 +9,10 @@ pub fn get_headers(req: &CheckRequest) -> super::StatusResult<&HashMap<String, S
     req.get_client_headers().ok_or_else(|| Status::invalid_argument("headers not provided by envoy"))
 }
 
+pub fn get_address(req: &CheckRequest) -> super::StatusResult<String> {
+    req.get_client_address().ok_or_else(|| Status::invalid_argument("address not provided by envoy")).cloned()
+}
+
 type ClaimInteger = u64;
 
 const DEFAULT_USER_CLAIMS: ConstHashSet<&str> = phf_set!(
