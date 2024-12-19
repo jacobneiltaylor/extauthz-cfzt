@@ -27,4 +27,6 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
           tags: "jacobneiltaylor/extauthz-cfzt:latest"
+          provenance: mode=max
+          sbom: true
           outputs: ${{ github.event_name == 'pull_request' && 'type=cacheonly' || 'type=registry' }}
