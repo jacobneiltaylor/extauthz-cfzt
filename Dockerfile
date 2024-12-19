@@ -1,4 +1,5 @@
 FROM rust:1.83-bullseye AS builder
+ARG BUILDKIT_SBOM_SCAN_STAGE=true
 
 RUN mkdir /opt/build
 
@@ -6,13 +7,14 @@ WORKDIR /opt/build
 
 RUN mkdir ./src
 RUN mkdir ./out
-RUN apt update && apt install -y musl-tools musl-dev build-essential clang llvm && ln -s /usr/bin/musl-gcc /usr/bin/$(arch)-linux-musl-gcc && rustup target add $(arch)-unknown-linux-musl
+RUN apt update && apt install -y musl-tools musl-dev build-essential clang llvm && ln -s /usr/bin/musl-gcc /usr/bin/$(arch)-linux-musl-gcc && rustup target add $(arch)-unknown-linux-musl && cargo install cargo-sbom
 
 COPY Cargo.toml ./
 COPY src/ ./src
 
 RUN echo "app:*:1000:1000:app:/:/bin/false" >> ./out/passwd && echo "app:*:1000:" >> ./out/group
 RUN cargo build -r --target=$(arch)-unknown-linux-musl && cp ./target/$(arch)-unknown-linux-musl/release/extauthz-cfzt ./out
+RUN cargo sbom >> /usr/local/share/sbom/extauthz-cfzt.spdx.json
 
 FROM scratch AS app
 
