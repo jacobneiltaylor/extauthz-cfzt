@@ -46,7 +46,8 @@ impl Authorization for CloudflareZeroTrustAuthorizationServer {
 
         log::info!("Recieved request from {}", client_address);
 
-        match client_headers.get("Cf-Access-Jwt-Assertion") {
+        let header = "cf-access-jwt-assertion".to_string();
+        match client_headers.get(&header) {
             Some(value) => {
                 log::debug!("Request has JWT: {}", value);
                 match self.validate(value) {

@@ -1,7 +1,6 @@
 use std::collections::HashMap;
-use phf::phf_set;
 use serde_json::Value;
-use jnt::types::{ConstHashSet, StdResult};
+use jnt::types::StdResult;
 use tonic::Status;
 use envoy_types::ext_authz::v3::{pb::CheckRequest, CheckRequestExt};
 
@@ -15,19 +14,6 @@ pub fn get_address(req: &CheckRequest) -> super::StatusResult<String> {
 
 type ClaimInteger = u64;
 
-const DEFAULT_USER_CLAIMS: ConstHashSet<&str> = phf_set!(
-    "aud",
-    "email",
-    "exp",
-    "iat",
-    "nbf",
-    "iss",
-    "type",
-    "nonce",
-    "sub",
-    "country",
-);
-
 pub struct UserAssertion {
     pub aud: Vec<String>,
     pub email: String,
@@ -39,7 +25,7 @@ pub struct UserAssertion {
     pub nonce: String,
     pub sub: String,
     pub country: String,
-    pub extra_claims: HashMap<String, String>
+    pub custom: HashMap<String, String>
 }
 
 fn get_required_claim<'a>(object: &'a serde_json::map::Map<String, Value>, claim: &str) -> StdResult<&'a Value> {
@@ -64,16 +50,31 @@ fn collect_audiences(object: &serde_json::map::Map<String, Value>) -> StdResult<
     Ok(audiences)
 }
 
+fn force_as_string(value: &Value) -> String {
+    match value.as_str() {
+        Some(strval) => strval.to_string(),
+        None => value.to_string(),
+    }
+}
+
+fn get_custom_claims(object: &serde_json::map::Map<String, Value>) -> StdResult<HashMap<String, String>> {
+    match object.get("custom") {
+        Some(value) => {
+            let mut claims: HashMap<String, String> = HashMap::new();
+            let custom_obj = value.as_object().ok_or("custom claim must be obj")?;
+
+            for (custom_claim, custom_val) in custom_obj.into_iter() {
+                claims.insert(custom_claim.to_string(), force_as_string(custom_val));
+            }
+
+            Ok(claims)
+        },
+        None => Ok(HashMap::new()),
+    }
+}
+
 impl UserAssertion {
     fn from_claims_object(object: &serde_json::map::Map<String, Value>) -> StdResult<Self> {
-        let mut extra_claims: HashMap<String, String> = HashMap::new();
-
-        for claim in object.keys() {
-            if !DEFAULT_USER_CLAIMS.contains(claim) {
-                extra_claims.insert(claim.to_string(), get_required_str_claim(object, claim)?);
-            }
-        }
-
         Ok(UserAssertion {
             aud: collect_audiences(object)?,
             email: get_required_str_claim(object, "email")?,
@@ -82,10 +83,10 @@ impl UserAssertion {
             nbf: get_required_int_claim(object, "nbf")?,
             iss: get_required_str_claim(object, "iss")?,
             typ: get_required_str_claim(object, "type")?,
-            nonce: get_required_str_claim(object, "nonce")?,
+            nonce: get_required_str_claim(object, "identity_nonce")?,
             sub: get_required_str_claim(object, "sub")?,
             country: get_required_str_claim(object, "country")?,
-            extra_claims: extra_claims,
+            custom: get_custom_claims(object)?,
         })
     }
 }
