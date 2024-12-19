@@ -1,0 +1,4 @@
+ingress:
+  - hostname: rust-cfzt-validator-integration.molten.dev
+    service: http://envoy:8080
+  - service: http_status:404

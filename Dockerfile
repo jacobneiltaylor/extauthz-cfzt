@@ -4,7 +4,7 @@ RUN mkdir /opt/build
 
 WORKDIR /opt/build
 
-RUN mkdir ./src && mkdir ./out && apt update && apt install -y musl-tools musl-dev build-essential clang llvm && ln -s /usr/bin/musl-gcc /usr/bin/$(arch)-linux-musl-gcc && rustup target add $(arch)-unknown-linux-musl && cargo install cargo-sbom
+RUN mkdir ./src && mkdir ./out && apt-get update && apt-get install -y musl-tools musl-dev build-essential clang llvm && ln -s /usr/bin/musl-gcc /usr/bin/$(arch)-linux-musl-gcc && rustup target add $(arch)-unknown-linux-musl && cargo install cargo-sbom
 
 COPY Cargo.toml ./
 COPY src/ ./src

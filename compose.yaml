@@ -1,0 +1,31 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared
+    volumes:
+      - "$HOME/.cloudflared/$CF_TUNNEL_ID.json:/mnt/creds.json"
+      - "$HOME/.cloudflared/cert.pem:/mnt/cert.pem"
+      - "./cloudflared.yaml:/mnt/config.yaml"
+    command: tunnel --config /mnt/config.yaml --origincert /mnt/cert.pem run --cred-file /mnt/creds.json $CF_TUNNEL_ID
+
+  envoy:
+    image: envoyproxy/envoy:v1.31-latest
+    volumes:
+      - "./envoy.yaml:/etc/envoy/envoy.yaml"
+    ports:
+      - "8080"
+      - "65000"
+
+  extauthz:
+    image: jacobneiltaylor/extauthz-cfzt
+    environment:
+      - TEAM_NAME=molten
+      - AUDIENCE=41f1d879c797d912d9bd80710db3dce92d30602a2dcbdf7bab33913071c44bd4
+      - LISTENER=tcp://127.0.0.1:10000
+      - RUST_LOG=info
+    ports:
+      - "10000"
+
+  httpbin:
+    image: kong/httpbin
+    ports:
+      - "80"
