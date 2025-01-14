@@ -1,11 +1,11 @@
 services:
-  cloudflared:
-    image: cloudflare/cloudflared
-    volumes:
-      - "$HOME/.cloudflared/$CF_TUNNEL_ID.json:/mnt/creds.json"
-      - "$HOME/.cloudflared/cert.pem:/mnt/cert.pem"
-      - "./cloudflared.yaml:/mnt/config.yaml"
-    command: tunnel --config /mnt/config.yaml --origincert /mnt/cert.pem run --cred-file /mnt/creds.json $CF_TUNNEL_ID
+  #cloudflared:
+  #  image: cloudflare/cloudflared
+  #  volumes:
+  #    - "$HOME/.cloudflared/$CF_TUNNEL_ID.json:/mnt/creds.json"
+  #    - "$HOME/.cloudflared/cert.pem:/mnt/cert.pem"
+  #    - "./cloudflared.yaml:/mnt/config.yaml"
+  #  command: tunnel --config /mnt/config.yaml --origincert /mnt/cert.pem run --cred-file /mnt/creds.json $CF_TUNNEL_ID
 
   envoy:
     image: envoyproxy/envoy:v1.31-latest

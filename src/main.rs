@@ -3,6 +3,7 @@ mod helpers;
 mod server;
 mod socket;
 
+use envoy_types::pb::envoy::extensions::filters::http::aws_lambda;
 use helpers::new_router;
 use jnt::string_err;
 use server::extauthz::CloudflareZeroTrustAuthorizationServer;
@@ -40,7 +41,7 @@ fn main() -> ExitCode {
 async fn async_main(configuration: config::schema::Configuration) -> jnt::types::EmptyResult {
     let listener = configuration.open_listener()?;
     let validator = Arc::new(configuration.new_validator()?);
-    let scheduler = JobScheduler::new().await?;
+    let mut scheduler = JobScheduler::new().await?;
 
     let router = new_router(CloudflareZeroTrustAuthorizationServer::new(
         validator.clone(),
@@ -53,15 +54,13 @@ async fn async_main(configuration: config::schema::Configuration) -> jnt::types:
     })?).await?;
 
     log::info!("Starting validation syncronisation job");
-    let cron = scheduler.start();
+    scheduler.start().await.or_else(
+        |e| Err(Box::new(SyncSchedulerError{message: e.to_string()}))
+    )?;
 
     log::info!("Running ExtAuthz server");
-    let server = run_server(router, listener);
+    run_server(router, listener).await?;
+    scheduler.shutdown().await?;
 
-    tokio::select! {
-        result = cron => { Ok(
-            result.or_else(|e| Err(Box::new(SyncSchedulerError{message: e.to_string()})))?
-        ) }
-        pass = server => { pass }
-    }
+    Ok(())
 }
