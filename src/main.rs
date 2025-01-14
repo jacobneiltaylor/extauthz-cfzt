@@ -3,9 +3,7 @@ mod helpers;
 mod server;
 mod socket;
 
-use envoy_types::pb::envoy::extensions::filters::http::aws_lambda;
 use helpers::new_router;
-use jnt::string_err;
 use server::extauthz::CloudflareZeroTrustAuthorizationServer;
 use socket::run_server;
 use tokio::runtime::Builder;
@@ -15,8 +13,6 @@ use std::{process::ExitCode, sync::Arc};
 #[cfg(all(target_env = "musl", target_pointer_width = "64"))]
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc; // Use mimalloc allocator for Muslc targets
-
-string_err!(SyncSchedulerError, message, "error while running syncronisation scheduler: {}");
 
 fn main() -> ExitCode {
     env_logger::init();
@@ -54,12 +50,12 @@ async fn async_main(configuration: config::schema::Configuration) -> jnt::types:
     })?).await?;
 
     log::info!("Starting validation syncronisation job");
-    scheduler.start().await.or_else(
-        |e| Err(Box::new(SyncSchedulerError{message: e.to_string()}))
-    )?;
+    scheduler.start().await?;
 
     log::info!("Running ExtAuthz server");
     run_server(router, listener).await?;
+
+    log::info!("Server stopped, shutting down validation syncronisation job");
     scheduler.shutdown().await?;
 
     Ok(())
