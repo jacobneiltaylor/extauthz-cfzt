@@ -148,7 +148,7 @@ impl PrincipalAssertion {
             .as_str()
             .ok_or("sub claim must be str")?;
 
-        if subject.len() == 0 {
+        if subject.is_empty() {
             return Ok(Self::Service(ServiceAssertion::from_claims_object(object)?));
         }
 

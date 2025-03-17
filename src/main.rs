@@ -3,11 +3,9 @@ mod helpers;
 mod server;
 mod socket;
 
-use config::audience;
 use config::audience::discovery::discover_audience_provider;
 use config::audience::schema::AudienceProvider;
 use helpers::new_router;
-use jnt::types::EmptyResult;
 use server::extauthz::CloudflareZeroTrustAuthorizationServer;
 use socket::run_server;
 use std::{process::ExitCode, sync::Arc};
@@ -35,30 +33,21 @@ fn start() -> Result<(), ExitCode> {
     let runtime = Builder::new_multi_thread()
         .enable_all()
         .build()
-        .or_else(|e| {
-            Err(helpers::handle_error(
-                Box::new(e),
-                "error during runtime start",
-                1,
-            ))
-        })?;
+        .map_err(|e| helpers::handle_error(Box::new(e), "error during runtime start", 1))?;
 
     log::info!("Performing bootstrap configuration discovery");
     let configuration = discover_bootstrap_configuration()
-        .or_else(|e| Err(helpers::handle_error(e, "error during config discovery", 2)))?;
+        .map_err(|e| helpers::handle_error(e, "error during config discovery", 2))?;
 
     log::info!("Performing audience provider discovery");
-    let aud_provider = Arc::new(discover_audience_provider().or_else(|e| {
-        Err(helpers::handle_error(
-            e,
-            "error during audience provider discovery",
-            3,
-        ))
-    })?);
+    let aud_provider =
+        Arc::new(discover_audience_provider().map_err(|e| {
+            helpers::handle_error(e, "error during audience provider discovery", 3)
+        })?);
 
     runtime
         .block_on(async_main(configuration, aud_provider.clone()))
-        .or_else(|e| Err(helpers::handle_error(e, "error during execution", 100)))
+        .map_err(|e| helpers::handle_error(e, "error during execution", 100))
 }
 
 async fn async_main(

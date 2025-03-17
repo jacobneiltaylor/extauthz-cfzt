@@ -1,8 +1,8 @@
-use std::str::FromStr;
 use super::schema::Configuration;
 use jnt::types;
 use rust_cfzt_validator::api::TeamKeys;
 use std::env;
+use std::str::FromStr;
 
 use crate::config::bootstrap::schema::TimeConstraintMode;
 
@@ -18,7 +18,7 @@ pub fn discover_bootstrap_configuration() -> types::StdResult<Configuration> {
     let nbf_validation = TimeConstraintMode::from_str(&discover_iat_validation_str())?;
     let exp_validation = TimeConstraintMode::from_str(&discover_exp_validation_str())?;
 
-    if static_key_str.len() > 0 {
+    if !static_key_str.is_empty() {
         let static_keys = Some(TeamKeys::from_str(&team_name, &static_key_str)?);
         return Ok(Configuration::new_single_team_configuration(
             &discover_listener_str(),

@@ -30,7 +30,7 @@ impl ResponseMutator for UserAssertion {
         set_header(builder, "Country", &self.country);
 
         for (key, value) in &self.custom {
-            set_header(builder, &format!("Custom-{key}"), &value);
+            set_header(builder, &format!("Custom-{key}"), value);
         }
 
         Ok(())

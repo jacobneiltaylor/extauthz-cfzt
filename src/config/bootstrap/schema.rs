@@ -89,7 +89,7 @@ impl Configuration {
             listener,
             ValidatorConfiguration::Team(StaticTeamValidatorConfiguration {
                 team_name: team_name.to_string(),
-                static_keys: static_keys,
+                static_keys,
             }),
             sync_schedule,
             nbf_validation,
