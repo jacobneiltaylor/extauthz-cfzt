@@ -1169,9 +1169,9 @@ dependencies = [
 
 [[package]]
 name = "rust-cfzt-validator"
-version = "0.3.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11b1d2039afb08ee162f6e633217c52b29ed1f82891b982fb4d23a7354a63998"
+checksum = "302318f7dc3d26bd4ebea3c1e7e993ddb06f2022257527e1cdce528b3a45e392"
 dependencies = [
  "jsonwebtoken",
  "serde",

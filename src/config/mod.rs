@@ -1,2 +1,2 @@
-pub mod discovery;
-pub mod schema;
+pub mod audience;
+pub mod bootstrap;

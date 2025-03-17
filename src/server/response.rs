@@ -3,15 +3,12 @@ use jnt::types::EmptyResult;
 
 use super::request::{PrincipalAssertion, ServiceAssertion, UserAssertion};
 
-
 fn get_header_name(suffix: &str) -> String {
     format!("X-Cfzt-Extauthz-{suffix}")
 }
 
 fn set_header(builder: &mut OkHttpResponseBuilder, name: &str, value: &str) {
-    builder.add_header(
-        get_header_name(name), value, None, false
-    );
+    builder.add_header(get_header_name(name), value, None, false);
 }
 
 pub trait ResponseMutator {
