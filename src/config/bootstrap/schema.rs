@@ -2,7 +2,6 @@ use std::str::FromStr;
 
 use jnt::sockets::Listener;
 use jnt::{opaque_err, types};
-use rust_cfzt_validator::api::TeamKeys;
 use rust_cfzt_validator::Validator;
 
 #[derive(Debug, PartialEq)]
@@ -23,9 +22,13 @@ impl FromStr for TimeConstraintMode {
     }
 }
 
+pub struct CommonValidatorConfiguration {
+    pub proxy_discovery: bool
+}
+
 pub struct StaticTeamValidatorConfiguration {
     pub team_name: String,
-    pub static_keys: Option<TeamKeys>,
+    pub static_keys: Option<String>,
 }
 
 impl StaticTeamValidatorConfiguration {
@@ -35,19 +38,19 @@ impl StaticTeamValidatorConfiguration {
 }
 
 pub enum ValidatorConfiguration {
-    Team(StaticTeamValidatorConfiguration),
+    Team(StaticTeamValidatorConfiguration, CommonValidatorConfiguration),
 }
 
 impl ValidatorConfiguration {
     pub fn get_default_team_name(&self) -> String {
         match self {
-            Self::Team(config) => config.team_name.to_string(),
+            Self::Team(config, _) => config.team_name.to_string(),
         }
     }
 
     pub fn requires_refresh(&self) -> bool {
         match self {
-            Self::Team(config) => !config.is_static_keys(),
+            Self::Team(config, _) => !config.is_static_keys(),
         }
     }
 }
@@ -80,17 +83,23 @@ impl Configuration {
     pub fn new_single_team_configuration(
         listener: &str,
         team_name: &str,
-        static_keys: Option<TeamKeys>,
+        static_keys: Option<String>,
         sync_schedule: &str,
         nbf_validation: TimeConstraintMode,
         exp_validation: TimeConstraintMode,
+        proxy_discovery: bool,
     ) -> Self {
         Configuration::new(
             listener,
-            ValidatorConfiguration::Team(StaticTeamValidatorConfiguration {
-                team_name: team_name.to_string(),
-                static_keys,
-            }),
+            ValidatorConfiguration::Team(
+                StaticTeamValidatorConfiguration {
+                    team_name: team_name.to_string(),
+                    static_keys,
+                },
+                CommonValidatorConfiguration {
+                    proxy_discovery: proxy_discovery,
+                },
+            ),
             sync_schedule,
             nbf_validation,
             exp_validation,
