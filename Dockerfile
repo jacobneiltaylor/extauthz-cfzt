@@ -1,4 +1,4 @@
-FROM rust:1.83-bullseye AS builder
+FROM rust:1.89-bullseye AS builder
 
 RUN mkdir /opt/build
 
